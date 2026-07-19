@@ -3,7 +3,7 @@ import pgvector from "pgvector";
 import pool from "../config/db.js";
 import { embedText } from "../utils/geminiEmbed.js";
 
-const SIMILARITY_THRESHOLD = 0.75; // tune this based on testing
+const SIMILARITY_THRESHOLD = 0.5; // tune this based on testing
 
 export default async function retrieveRelevant(query, topK = 5) {
   const queryEmbedding = await embedText(query);
