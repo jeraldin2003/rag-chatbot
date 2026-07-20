@@ -1,18 +1,23 @@
 // src/services/ragService.js
 import retrieveRelevant from "./retrievalService.js";
 import { generateAnswer } from "../utils/geminiGenerate.js";
+import { generateAnswerOllama } from "../utils/ollamaGenerate.js";
 
-export default async function askQuestion(question, topK = 5) {
+async function askQuestion(question, topK, provider) {
   const relevantChunks = await retrieveRelevant(question, topK);
 
   if (relevantChunks.length === 0) {
     return {
       answer: "I don't have enough information in the uploaded documents to answer that.",
       sources: [],
+      provider,
     };
   }
 
-  const answer = await generateAnswer(question, relevantChunks);
+  const answer =
+    provider === "ollama"
+      ? await generateAnswerOllama(question, relevantChunks)
+      : await generateAnswer(question, relevantChunks);
 
   return {
     answer,
@@ -21,5 +26,14 @@ export default async function askQuestion(question, topK = 5) {
       source: c.metadata?.source,
       similarity: c.similarity,
     })),
+    provider,
   };
+}
+
+export async function askQuestionGemini(question, topK = 5) {
+  return askQuestion(question, topK, "gemini");
+}
+
+export async function askQuestionOllama(question, topK = 5) {
+  return askQuestion(question, topK, "ollama");
 }
