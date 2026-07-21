@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "eval": "node eval/runEval.js",
+    "eval:ollama": "cross-env EVAL_PROVIDER=ollama node eval/runEval.js"
   },
   "keywords": [],
   "author": "",
@@ -22,5 +23,9 @@
     "pg": "^8.22.0",
     "pgvector": "^0.3.0",
     "unpdf": "^1.6.2"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "node-fetch": "^3.3.2"
   }
 }

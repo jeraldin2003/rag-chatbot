@@ -11,7 +11,7 @@ await initTable();
 
 const app = express();
 const corsOptions = {
-  origin: 'http://localhost:5173',
+  origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true // Allow cookies or auth headers if needed
 };
