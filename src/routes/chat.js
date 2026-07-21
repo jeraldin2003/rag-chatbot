@@ -1,4 +1,3 @@
-// src/routes/chat.js
 import express from "express";
 import { askQuestionGemini, askQuestionOllama } from "../services/ragService.js";
 

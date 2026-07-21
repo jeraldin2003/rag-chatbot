@@ -1,4 +1,3 @@
-// src/utils/chunkText.js
 export function chunkText(text, chunkSize = 1000, overlap = 200) {
   // Clean up excessive whitespace/newlines from PDF extraction
   const cleaned = text.replace(/\s+/g, " ").trim();

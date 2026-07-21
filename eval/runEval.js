@@ -1,4 +1,3 @@
-// eval/runEval.js
 import { testQuestions } from "./testQuestions.js";
 
 const BACKEND_URL = "http://localhost:3001";
@@ -46,6 +45,8 @@ function scoreResult(testCase, result) {
 
   // relevant / specific-detail / multi-doc: check expected keywords appear
   const missing = expectedKeywords.filter((kw) => !answer.includes(kw.toLowerCase()));
+  // treat keywords with similar meaning as OR-groups instead of AND — for now, just log the answer:
+  console.log(`   → actual answer: ${answer}`);
   return missing.length === 0
     ? { pass: true, reason: "all expected keywords found" }
     : { pass: false, reason: `missing keywords: ${missing.join(", ")}` };

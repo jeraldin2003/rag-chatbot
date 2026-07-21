@@ -1,4 +1,3 @@
-// src/utils/pdf_parser.js
 import { extractText, getDocumentProxy } from "unpdf";
 import fs from "fs/promises";
 

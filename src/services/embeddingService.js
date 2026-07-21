@@ -1,4 +1,3 @@
-// src/services/embeddingService.js
 import pgvector from "pgvector";
 import pool from "../config/db.js";
 import { embedTextBatch } from "../utils/geminiEmbed.js";

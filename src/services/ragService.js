@@ -1,4 +1,3 @@
-// src/services/ragService.js
 import retrieveRelevant from "./retrievalService.js";
 import { generateAnswer } from "../utils/geminiGenerate.js";
 import { generateAnswerOllama } from "../utils/ollamaGenerate.js";

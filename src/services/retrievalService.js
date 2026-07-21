@@ -1,4 +1,3 @@
-// src/services/retrievalService.js
 import pgvector from "pgvector";
 import pool from "../config/db.js";
 import { embedText } from "../utils/geminiEmbed.js";

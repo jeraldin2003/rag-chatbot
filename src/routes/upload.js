@@ -1,10 +1,9 @@
-// src/routes/upload.js
 import express from "express";
 import multer from "multer";
 import fs from "fs/promises";
 import  parsePdf  from "../utils/pdf_parser.js";
 import  {chunkText } from "../utils/chunker.js";
-import embedAndStore from "../services/embeddingService.js"; // updated path
+import embedAndStore from "../services/embeddingService.js";
 import { hashFile } from "../utils/hashFile.js";
 import pool from "../config/db.js";
 
@@ -18,8 +17,8 @@ router.post("/upload-pdf", upload.single("file"), async (req, res) => {
   }
 
   try {
+    //checks if content already exists.
     const fileHash = await hashFile(req.file.path);
-
     const existing = await pool.query(
       `SELECT id FROM documents WHERE file_hash = $1 LIMIT 1`,
       [fileHash]

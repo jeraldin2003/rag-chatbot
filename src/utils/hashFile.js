@@ -1,4 +1,3 @@
-// src/utils/hashFile.js
 import crypto from "crypto";
 import fs from "fs/promises";
 

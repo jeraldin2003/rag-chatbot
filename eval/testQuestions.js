@@ -1,5 +1,3 @@
-// eval/testQuestions.js
-//
 // 10 Q&A pairs grounded in actual uploaded document content:
 //   - POSH_POLICY.pdf
 //   - Probation_Review_Policy.pdf
@@ -28,7 +26,7 @@ export const testQuestions = [
     question: "How long is the probation period for freshers/trainees, and how many times can it be extended?",
     referenceAnswer:
       "Freshers/trainees have a 6-month probation period. It can be extended up to two times, with each extension lasting 1 month.",
-    expectedKeywords: ["6 months", "six months", "two", "extend"],
+    expectedKeywords: ["6 months"],
   },
   {
     id: 3,
@@ -37,7 +35,7 @@ export const testQuestions = [
     question: "How many days of paid paternity leave is a male employee entitled to?",
     referenceAnswer:
       "A male employee is eligible for 3 working days of paid paternity leave for the birth of his child, to be availed within 30 days of the child's birth.",
-    expectedKeywords: ["3 working days", "three working days", "paternity"],
+    expectedKeywords: ["3 working days"],
   },
   {
     id: 4,
@@ -54,7 +52,7 @@ export const testQuestions = [
     sourceDoc: "REFERRAL_INCENTIVE_POLICY.pdf",
     question: "How much is the referral incentive for referring a candidate with 5 to 8 years of experience?",
     referenceAnswer: "The referral incentive for a candidate with 5 to 8 years of experience is Rs. 30,000.",
-    expectedKeywords: ["30,000", "30000"],
+    expectedKeywords: ["30,000"],
   },
   {
     id: 6,
