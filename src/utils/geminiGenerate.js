@@ -9,14 +9,14 @@ export async function generateAnswer(question, contextChunks) {
     .join("\n\n");
 
   const prompt = `You are a helpful assistant answering questions based only on the provided context.
-If the answer isn't in the context, say you don't have enough information to answer — do not make anything up.
+  If the answer isn't in the context, say you don't have enough information to answer — do not make anything up.
 
-Context:
-${context}
+  Context:
+  ${context}
 
-Question: ${question}
+  Question: ${question}
 
-Answer:`;
+  Answer:`;
 
   const result = await model.generateContent(prompt);
   return result.response.text();
