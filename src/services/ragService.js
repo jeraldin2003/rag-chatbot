@@ -1,10 +1,10 @@
 import retrieveRelevant from "./retrievalService.js";
 import { generateAnswer } from "../utils/geminiGenerate.js";
 import { generateAnswerOllama } from "../utils/ollamaGenerate.js";
-
+import QdrantQuery from './retrievalService.js'
 async function askQuestion(question, topK, provider) {
-  const relevantChunks = await retrieveRelevant(question, topK);
-
+  const relevantChunks = await QdrantQuery(question);
+  
   if (relevantChunks.length === 0) {
     return {
       answer: "I don't have enough information in the uploaded documents to answer that.",

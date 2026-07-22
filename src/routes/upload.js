@@ -3,10 +3,11 @@ import multer from "multer";
 import fs from "fs/promises";
 import  parsePdf  from "../utils/pdf_parser.js";
 import  {chunkText } from "../utils/chunker.js";
-import embedAndStore from "../services/embeddingService.js";
 import { hashFile } from "../utils/hashFile.js";
 import pool from "../config/db.js";
-
+import { randomUUID } from "crypto";
+import { embedTextBatch } from "../utils/geminiEmbed.js";
+import { client } from "../config/Qdrant.js";
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" }); // temp storage
@@ -19,17 +20,6 @@ router.post("/upload-pdf", upload.single("file"), async (req, res) => {
   try {
     //checks if content already exists.
     const fileHash = await hashFile(req.file.path);
-    const existing = await pool.query(
-      `SELECT id FROM documents WHERE file_hash = $1 LIMIT 1`,
-      [fileHash]
-    );
-
-    if (existing.rows.length > 0) {
-      await fs.unlink(req.file.path).catch(() => {});
-      return res.status(409).json({
-        error: "This file has already been uploaded",
-      });
-    }
 
 
     const { text, numPages } = await parsePdf(req.file.path);
@@ -40,12 +30,24 @@ router.post("/upload-pdf", upload.single("file"), async (req, res) => {
     //array of chunks
     const chunks = chunkText(text);
 
-    // upload.js
-    await embedAndStore(chunks, {
-      source: req.file.originalname,
-      numPages,
-      uploadedAt: new Date().toISOString(),
-    }, fileHash);
+    const embeddings = await embedTextBatch(chunks); // must match embedText's model/dims used at query time
+
+    const points = chunks.map((chunk, idx) => ({
+      id: randomUUID(),
+      vector: embeddings[idx], // raw numeric array, matches queryEmbedding shape
+      payload: {
+        content: chunk,          // QdrantQuery reads payload.content
+        metadata: {
+          source: req.file.originalname,
+          numPages,
+          uploadedAt: new Date().toISOString(),
+        },
+        created_at: new Date().toISOString(),
+        file_hash: fileHash,
+      },
+    }));
+
+    await client.upsert("items", { points });
 
     res.status(200).json({
       message: "PDF processed and stored successfully",

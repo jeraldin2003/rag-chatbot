@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
 
-const OUTPUT_DIM = 768; // must match your VECTOR(...) column size
+const OUTPUT_DIM = 384; // must match your VECTOR(...) column size
 
 export async function embedText(text) {
   const result = await model.embedContent({

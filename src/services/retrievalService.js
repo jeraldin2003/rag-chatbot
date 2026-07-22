@@ -1,21 +1,24 @@
-import pgvector from "pgvector";
-import pool from "../config/db.js";
+import {client} from "../config/qdrant.js"; 
 import { embedText } from "../utils/geminiEmbed.js";
 
-const SIMILARITY_THRESHOLD = 0.5; // tune this based on testing
+const COLLECTION = "items"; // match your actual collection name
+const SIMILARITY_THRESHOLD = 0; 
 
-export default async function retrieveRelevant(query, topK = 5) {
+export default async function QdrantQuery(query, topK = 5) {
   const queryEmbedding = await embedText(query);
 
-  const result = await pool.query(
-    `SELECT id, content, metadata, created_at,
-            1 - (embedding <=> $1) AS similarity
-     FROM documents
-     WHERE 1 - (embedding <=> $1) > $3
-     ORDER BY embedding <=> $1
-     LIMIT $2`,
-    [pgvector.toSql(queryEmbedding), topK, SIMILARITY_THRESHOLD]
-  );
+  const results = await client.search(COLLECTION, {
+    vector: queryEmbedding,
+    limit: topK,
+    score_threshold: SIMILARITY_THRESHOLD,
+    with_payload: true,
+  });
 
-  return result.rows;
+  return results.map((r) => ({
+    id: r.id,
+    content: r.payload.content,
+    metadata: r.payload.metadata,
+    created_at: r.payload.created_at,
+    similarity: r.score,
+  }));
 }
