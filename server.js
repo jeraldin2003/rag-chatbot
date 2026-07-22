@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import initTable from "./src/config/InitDB.js";
 import uploadRouter from "./src/routes/upload.js";
 import chatRouter from "./src/routes/chat.js";
+import {client} from './src/config/Qdrant.js'
 dotenv.config();
 await initTable();
 
@@ -23,6 +24,10 @@ app.use(express.json());
 app.use("/upload_file", uploadRouter);
 app.use("/chat", chatRouter);
 
+await client.createPayloadIndex("hashes", {
+  field_name: "file_hash",
+  field_schema: "keyword",
+});
 
 const PORT=process.env.PORT ? process.env.PORT : 8000
 app.listen(PORT, () => console.log(`Server running on ${PORT}`));
