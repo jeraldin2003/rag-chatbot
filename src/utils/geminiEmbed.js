@@ -1,25 +1,46 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
+const model = genAI.getGenerativeModel({
+  model: "gemini-embedding-001",
+});
 
-const OUTPUT_DIM = 384; // must match your VECTOR(...) column size
+const OUTPUT_DIM = 384;
+const MAX_BATCH_SIZE = 100;
 
 export async function embedText(text) {
   const result = await model.embedContent({
-    content: { parts: [{ text }] },
+    content: {
+      parts: [{ text }],
+    },
     outputDimensionality: OUTPUT_DIM,
   });
+
   return result.embedding.values;
 }
 
 export async function embedTextBatch(texts) {
-  const result = await model.batchEmbedContents({
-    requests: texts.map((text) => ({
-      model: "models/gemini-embedding-001",
-      content: { parts: [{ text }] },
-      outputDimensionality: OUTPUT_DIM,
-    })),
-  });
-  return result.embeddings.map((e) => e.values);
+  const embeddings = [];
+
+  for (let i = 0; i < texts.length; i += MAX_BATCH_SIZE) {
+    const batch = texts.slice(i, i + MAX_BATCH_SIZE);
+
+    console.log(
+      `Embedding batch ${Math.floor(i / MAX_BATCH_SIZE) + 1}: ${batch.length} chunks`
+    );
+
+    const result = await model.batchEmbedContents({
+      requests: batch.map((text) => ({
+        model: "models/gemini-embedding-001",
+        content: {
+          parts: [{ text }],
+        },
+        outputDimensionality: OUTPUT_DIM,
+      })),
+    });
+
+    embeddings.push(...result.embeddings.map((e) => e.values));
+  }
+
+  return embeddings;
 }

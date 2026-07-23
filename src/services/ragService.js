@@ -1,22 +1,27 @@
-import retrieveRelevant from "./retrievalService.js";
+import { queryRelevantChunks } from "./retrievalService.js";
 import { generateAnswer } from "../utils/geminiGenerate.js";
 import { generateAnswerOllama } from "../utils/ollamaGenerate.js";
-import QdrantQuery from './retrievalService.js'
-async function askQuestion(question, topK, provider) {
-  const relevantChunks = await QdrantQuery(question);
-  
+
+export async function askQuestion(question, topK, provider) {
+  console.time(`[chat/${provider}] Retrieval`);
+  const relevantChunks = await queryRelevantChunks(question, topK);
+  console.timeEnd(`[chat/${provider}] Retrieval`);
+
   if (relevantChunks.length === 0) {
     return {
-      answer: "I don't have enough information in the uploaded documents to answer that.",
+      answer:
+        "I don't have enough information in the uploaded documents to answer that.",
       sources: [],
       provider,
     };
   }
 
+  console.time(`[chat/${provider}] LLM generation`);
   const answer =
     provider === "ollama"
       ? await generateAnswerOllama(question, relevantChunks)
       : await generateAnswer(question, relevantChunks);
+  console.timeEnd(`[chat/${provider}] LLM generation`);
 
   return {
     answer,
@@ -27,12 +32,4 @@ async function askQuestion(question, topK, provider) {
     })),
     provider,
   };
-}
-
-export async function askQuestionGemini(question, topK = 5) {
-  return askQuestion(question, topK, "gemini");
-}
-
-export async function askQuestionOllama(question, topK = 5) {
-  return askQuestion(question, topK, "ollama");
 }

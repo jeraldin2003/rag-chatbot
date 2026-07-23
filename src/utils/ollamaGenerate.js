@@ -1,11 +1,5 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
+const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "phi3";
-
-console.log(OLLAMA_MODEL)
 
 export async function generateAnswerOllama(question, contextChunks) {
   const context = contextChunks
@@ -13,14 +7,14 @@ export async function generateAnswerOllama(question, contextChunks) {
     .join("\n\n");
 
   const prompt = `You are a helpful assistant answering questions based only on the provided context.
-If the answer isn't in the context, say you don't have enough information to answer — do not make anything up.
+  If the answer isn't in the context, say you don't have enough information to answer — do not make anything up.
 
-Context:
-${context}
+  Context:
+  ${context}
 
-Question: ${question}
+  Question: ${question}
 
-Answer:`;
+  Answer:`;
 
   const response = await fetch(`${OLLAMA_URL}/api/generate`, {
     method: "POST",
