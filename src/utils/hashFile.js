@@ -2,6 +2,11 @@ import crypto from "crypto";
 import fs from "fs/promises";
 
 export async function hashFile(filePath) {
-  const buffer = await fs.readFile(filePath);
-  return crypto.createHash("sha256").update(buffer).digest("hex");
+  try {
+    const buffer = await fs.readFile(filePath);
+    return crypto.createHash("sha256").update(buffer).digest("hex");
+  } catch (err) {
+    console.error("[hashFile] Error computing hash for file:", err.message);
+    throw new Error(`Failed to compute file hash: ${err.message}`);
+  }
 }

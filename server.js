@@ -37,8 +37,19 @@ async function startServer() {
 
   await bm25.syncFromQdrant();
 
+  process.on("unhandledRejection", (reason, promise) => {
+    console.error("[Uncaught Rejection] at:", promise, "reason:", reason);
+  });
+
+  process.on("uncaughtException", (err) => {
+    console.error("[Uncaught Exception]:", err.message, err.stack);
+  });
+
   const PORT = process.env.PORT || 8000;
   app.listen(PORT, () => console.log(`Server running on ${PORT}`));
 }
 
-startServer();
+startServer().catch((err) => {
+  console.error("❌ Critical server startup failure:", err.message);
+  process.exit(1);
+});

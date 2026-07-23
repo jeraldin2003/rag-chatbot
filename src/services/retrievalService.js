@@ -1,5 +1,5 @@
 import { client } from "../config/qdrant.js";
-import { embedText } from "../utils/geminiEmbed.js";
+import { embedText } from "../utils/ollamaEmbed.js";
 import { bm25 } from "./bm25Service.js";
 import { logRetrievalTrace } from "../utils/logger.js";
 
@@ -8,86 +8,92 @@ const SIMILARITY_THRESHOLD = 0;
 const RRF_K = 60; // Reciprocal Rank Fusion constant
 
 export async function queryRelevantChunks(query, topK = 5) {
-  if (!bm25.isInitialized) {
-    await bm25.syncFromQdrant();
+  try {
+    if (!bm25.isInitialized) {
+      await bm25.syncFromQdrant();
+    }
+
+    const candidateK = Math.max(topK * 3, 20);
+
+    // 1. Dense Vector Search (Qdrant)
+    const rawEmbedding = await embedText(query);
+    const vector = Array.isArray(rawEmbedding) && Array.isArray(rawEmbedding[0]) ? rawEmbedding[0] : rawEmbedding;
+    const denseResults = await client.search(COLLECTION, {
+      vector,
+      limit: candidateK,
+      score_threshold: SIMILARITY_THRESHOLD,
+      with_payload: true,
+    });
+
+    const denseMap = new Map();
+    (denseResults || []).forEach((r, idx) => {
+      denseMap.set(r.id, {
+        rank: idx + 1,
+        score: r.score,
+        item: {
+          id: r.id,
+          content: r.payload.content,
+          metadata: r.payload.metadata,
+          created_at: r.payload.created_at,
+        },
+      });
+    });
+
+    // 2. Sparse Keyword Search (BM25)
+    const bm25Results = bm25.search(query, candidateK);
+    const bm25Map = new Map();
+    (bm25Results || []).forEach((r, idx) => {
+      bm25Map.set(r.id, {
+        rank: idx + 1,
+        score: r.score,
+        item: {
+          id: r.id,
+          content: r.content,
+          metadata: r.metadata,
+          created_at: r.created_at,
+        },
+      });
+    });
+
+    // 3. Reciprocal Rank Fusion (RRF)
+    const allDocIds = new Set([...denseMap.keys(), ...bm25Map.keys()]);
+    const fused = [];
+
+    for (const id of allDocIds) {
+      const denseInfo = denseMap.get(id);
+      const bm25Info = bm25Map.get(id);
+
+      const denseScore = denseInfo ? 1 / (RRF_K + denseInfo.rank) : 0;
+      const bm25Score = bm25Info ? 1 / (RRF_K + bm25Info.rank) : 0;
+
+      const rrfScore = denseScore + bm25Score;
+      const item = (denseInfo || bm25Info).item;
+
+      fused.push({
+        ...item,
+        similarity: denseInfo ? denseInfo.score : 0,
+        rrfScore,
+      });
+    }
+
+    // 4. Second-Stage Candidate Re-Ranking
+    const topCandidates = fused.sort((a, b) => b.rrfScore - a.rrfScore).slice(0, Math.max(topK * 2, 10));
+    const reranked = rerankCandidates(query, topCandidates);
+    const finalResults = reranked.slice(0, topK);
+
+    logRetrievalTrace({
+      query,
+      denseCount: (denseResults || []).length,
+      bm25Count: (bm25Results || []).length,
+      fusedCount: fused.length,
+      chunks: finalResults,
+    });
+
+    return finalResults;
+  } catch (err) {
+    console.error("[retrievalService] Error querying relevant chunks:", err.message);
+    throw new Error(`Failed to retrieve relevant chunks: ${err.message}`);
   }
-
-  const candidateK = Math.max(topK * 3, 20);
-
-  // 1. Dense Vector Search (Qdrant)
-  const queryEmbedding = await embedText(query);
-  const denseResults = await client.search(COLLECTION, {
-    vector: queryEmbedding,
-    limit: candidateK,
-    score_threshold: SIMILARITY_THRESHOLD,
-    with_payload: true,
-  });
-
-  const denseMap = new Map();
-  denseResults.forEach((r, idx) => {
-    denseMap.set(r.id, {
-      rank: idx + 1,
-      score: r.score,
-      item: {
-        id: r.id,
-        content: r.payload.content,
-        metadata: r.payload.metadata,
-        created_at: r.payload.created_at,
-      },
-    });
-  });
-
-  // 2. Sparse Keyword Search (BM25)
-  const bm25Results = bm25.search(query, candidateK);
-  const bm25Map = new Map();
-  bm25Results.forEach((r, idx) => {
-    bm25Map.set(r.id, {
-      rank: idx + 1,
-      score: r.score,
-      item: {
-        id: r.id,
-        content: r.content,
-        metadata: r.metadata,
-        created_at: r.created_at,
-      },
-    });
-  });
-
-  // 3. Reciprocal Rank Fusion (RRF)
-  const allDocIds = new Set([...denseMap.keys(), ...bm25Map.keys()]);
-  const fused = [];
-
-  for (const id of allDocIds) {
-    const denseInfo = denseMap.get(id);
-    const bm25Info = bm25Map.get(id);
-
-    const denseScore = denseInfo ? 1 / (RRF_K + denseInfo.rank) : 0;
-    const bm25Score = bm25Info ? 1 / (RRF_K + bm25Info.rank) : 0;
-
-    const rrfScore = denseScore + bm25Score;
-    const item = (denseInfo || bm25Info).item;
-
-    fused.push({
-      ...item,
-      similarity: denseInfo ? denseInfo.score : 0,
-      rrfScore,
-    });
-  }
-
-  // 4. Second-Stage Candidate Re-Ranking
-  const topCandidates = fused.sort((a, b) => b.rrfScore - a.rrfScore).slice(0, Math.max(topK * 2, 10));
-  const reranked = rerankCandidates(query, topCandidates);
-  const finalResults = reranked.slice(0, topK);
-
-  logRetrievalTrace({
-    query,
-    denseCount: denseResults.length,
-    bm25Count: bm25Results.length,
-    fusedCount: fused.length,
-    chunks: finalResults,
-  });
-
-  return finalResults;
 }
 
 function rerankCandidates(query, candidates) {

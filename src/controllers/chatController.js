@@ -2,20 +2,20 @@ import { askQuestion } from "../services/ragService.js";
 
 export function handleChat(provider) {
   return async (req, res, next) => {
-    const { question, topK, history } = req.body;
+    const { question, topK, history } = req.body || {};
 
-    if (!question || question.trim().length === 0) {
+    if (!question || typeof question !== "string" || question.trim().length === 0) {
       return res.status(400).json({ error: "Question is required" });
     }
 
     console.time(`[chat/${provider}] Total`);
     try {
-      const result = await askQuestion(question, topK || 5, provider, history || []);
-      console.timeEnd(`[chat/${provider}] Total`);
+      const result = await askQuestion(question.trim(), topK || 5, provider, history || []);
       res.json(result);
     } catch (err) {
-      console.timeEnd(`[chat/${provider}] Total`);
       next(err);
+    } finally {
+      console.timeEnd(`[chat/${provider}] Total`);
     }
   };
 }
