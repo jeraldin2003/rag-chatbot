@@ -5,6 +5,9 @@ import { uploadFile } from "../controllers/uploadController.js";
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-router.post("/upload-pdf", upload.single("file"), uploadFile);
-
+router.post(
+  "/upload",
+  upload.array("files", 10),
+  uploadFile
+);
 export default router;

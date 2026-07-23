@@ -5,9 +5,19 @@ import { client } from "../config/qdrant.js";
 import { randomUUID } from "crypto";
 
 export async function processDocument(file, fileHash) {
-  console.time("[upload] PDF parsing");
-  const { text, numPages } = await parsePdf(file.path);
-  console.timeEnd("[upload] PDF parsing");
+  const prefix = `[${file.originalname}]`;
+
+  let text;
+  let numPages;
+
+  console.time(`${prefix} PDF parsing`);
+  try {
+    const parsed = await parsePdf(file.path);
+    text = parsed.text;
+    numPages = parsed.numPages;
+  } finally {
+    console.timeEnd(`${prefix} PDF parsing`);
+  }
 
   if (!text || text.trim().length === 0) {
     const error = new Error(
@@ -19,9 +29,16 @@ export async function processDocument(file, fileHash) {
 
   const chunks = chunkText(text);
 
-  console.time("[upload] Embedding");
-  const embeddings = await embedTextBatch(chunks);
-  console.timeEnd("[upload] Embedding");
+  let embeddings;
+
+  console.time(`${prefix} Embedding`);
+  try {
+    embeddings = await embedTextBatch(chunks);
+  } finally {
+    console.timeEnd(`${prefix} Embedding`);
+  }
+
+  const now = new Date().toISOString();
 
   const points = chunks.map((chunk, idx) => ({
     id: randomUUID(),
@@ -31,30 +48,36 @@ export async function processDocument(file, fileHash) {
       metadata: {
         source: file.originalname,
         numPages,
-        uploadedAt: new Date().toISOString(),
+        uploadedAt: now,
       },
-      created_at: new Date().toISOString(),
+      created_at: now,
       fileHash,
     },
   }));
 
-  console.time("[upload] Qdrant storage");
-  await client.upsert("items", { points });
+  console.time(`${prefix} Qdrant storage`);
+  try {
+    await client.upsert("items", { points });
 
-  await client.upsert("hashes", {
-    points: [
-      {
-        id: randomUUID(),
-        vector: [0],
-        payload: {
-          file_hash: fileHash,
-          filename: file.originalname,
-          uploaded_at: new Date().toISOString(),
+    await client.upsert("hashes", {
+      points: [
+        {
+          id: randomUUID(),
+          vector: [0],
+          payload: {
+            file_hash: fileHash,
+            filename: file.originalname,
+            uploaded_at: now,
+          },
         },
-      },
-    ],
-  });
-  console.timeEnd("[upload] Qdrant storage");
+      ],
+    });
+  } finally {
+    console.timeEnd(`${prefix} Qdrant storage`);
+  }
 
-  return { numPages, chunksCreated: chunks.length };
+  return {
+    numPages,
+    chunksCreated: chunks.length,
+  };
 }
