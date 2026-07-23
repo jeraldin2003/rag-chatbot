@@ -1,11 +1,10 @@
 import express from "express";
 import multer from "multer";
-import { client } from "../config/Qdrant.js";
+import { uploadFile } from "../controllers/uploadController.js";
 
-import upload_file from '../controller/upload_file.js'
 const router = express.Router();
-const upload = multer({ dest: "uploads/" }); // temp storage
+const upload = multer({ dest: "uploads/" });
 
-router.post("/upload-pdf", upload.single("file"), upload_file);
+router.post("/upload-pdf", upload.single("file"), uploadFile);
 
 export default router;

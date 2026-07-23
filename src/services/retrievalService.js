@@ -1,10 +1,10 @@
-import {client} from "../config/qdrant.js"; 
+import { client } from "../config/qdrant.js";
 import { embedText } from "../utils/geminiEmbed.js";
 
-const COLLECTION = "items"; // match your actual collection name
-const SIMILARITY_THRESHOLD = 0; 
+const COLLECTION = "items";
+const SIMILARITY_THRESHOLD = 0;
 
-export default async function QdrantQuery(query, topK = 5) {
+export async function queryRelevantChunks(query, topK = 5) {
   const queryEmbedding = await embedText(query);
 
   const results = await client.search(COLLECTION, {

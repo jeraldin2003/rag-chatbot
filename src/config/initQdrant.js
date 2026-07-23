@@ -1,4 +1,5 @@
-import {client} from './Qdrant.js'
+import "dotenv/config";
+import { client } from "./qdrant.js";
 
 await client.createCollection("hashes", {
   vectors: {
@@ -6,6 +7,9 @@ await client.createCollection("hashes", {
     distance: "Cosine",
   },
 });
+
 await client.createCollection("items", {
-    vectors: { size: 384, distance: "Cosine" },
+  vectors: { size: 384, distance: "Cosine" },
 });
+
+console.log("✅ Qdrant collections created");
