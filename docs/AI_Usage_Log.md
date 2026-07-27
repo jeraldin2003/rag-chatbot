@@ -49,5 +49,15 @@ AI tool used: Claude (Anthropic), via chat interface. Used throughout backend, f
 | Ran the eval harness and shared results | Assess chatbot quality objectively rather than by inspection | Distinguished real defects (small model failing to decline irrelevant questions, a missed multi-doc retrieval) from false failures caused by overly strict keyword scoring |
 | Asked what "smallest LLM" would work for Ollama | Balance speed vs. answer quality | Recommended against going smaller than the current model, since eval results already showed instruction-following degrading |
 
+## Week 10 — Hybrid Search, Re-Ranking & Production Refinements
+
+| Prompt | Purpose | Outcome |
+|---|---|---|
+| Asked to migrate vector store and implement BM25 Hybrid Search | Integrate lexical search alongside dense vector embeddings | Created in-memory Okapi BM25 engine (`bm25Service.js`) synced with Qdrant collection |
+| Implement Reciprocal Rank Fusion (RRF) & candidate re-ranking | Fusion & candidate re-ordering | Implemented RRF ($k=60$) and second-stage phrase/coverage reranking pass in `retrievalService.js` |
+| Enforce inline source citations and multi-turn conversation memory | Meet prompt & conversation requirements | Updated prompt templates for bracketed citations (e.g. `[POSH_POLICY.pdf]`) and added history context (last 3 turns) |
+| Upgrade evaluation harness with latency and cost metrics | Automated model comparison | Extended `eval/runEval.js` to compute pass rate, average latency (ms), and estimated token costs ($) |
+| Create ADR-004 model selection recommendation | Capstone deliverable | Generated 1-page decision record recommending Gemini API for production shipping |
+
 ## Summary
-AI was used as a pair-programming and debugging partner across the full stack — architecture decisions (vector DB choice, provider routing), implementation (embedding pipeline, retrieval, frontend), and quality assurance (building and interpreting an evaluation harness against real documents). Errors and dead ends were part of the iteration process; several early fixes (pgvector registration, embedding model name, PDF parser choice) required more than one pass before landing on a working solution.
+AI was used as a pair-programming and debugging partner across the full stack — architecture decisions (vector DB choice, provider routing, hybrid search, RRF fusion), implementation (embedding pipeline, retrieval, memory, frontend), and quality assurance (building and interpreting an evaluation harness against real documents). Errors and dead ends were part of the iteration process; several early fixes (pgvector registration, embedding model name, PDF parser choice) required more than one pass before landing on a working solution.
