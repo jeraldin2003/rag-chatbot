@@ -2,6 +2,7 @@ import parsePdf from "../utils/pdfParser.js";
 import { chunkText } from "../utils/chunker.js";
 import { embedTextBatch } from "../utils/geminiEmbed.js";
 import { client } from "../config/qdrant.js";
+import { bm25 } from "./bm25Service.js";
 import { randomUUID } from "crypto";
 
 export async function processDocument(file, fileHash) {
@@ -72,6 +73,15 @@ export async function processDocument(file, fileHash) {
         },
       ],
     });
+
+    bm25.addDocuments(
+      points.map((p) => ({
+        id: p.id,
+        content: p.payload.content,
+        metadata: p.payload.metadata,
+        created_at: p.payload.created_at,
+      }))
+    );
   } finally {
     console.timeEnd(`${prefix} Qdrant storage`);
   }
