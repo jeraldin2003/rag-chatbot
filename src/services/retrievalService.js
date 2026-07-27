@@ -1,6 +1,7 @@
 import { client } from "../config/qdrant.js";
 import { embedText } from "../utils/geminiEmbed.js";
 import { bm25 } from "./bm25Service.js";
+import { logRetrievalTrace } from "../utils/logger.js";
 
 const COLLECTION = "items";
 const SIMILARITY_THRESHOLD = 0;
@@ -73,6 +74,54 @@ export async function queryRelevantChunks(query, topK = 5) {
     });
   }
 
-  return fused.sort((a, b) => b.rrfScore - a.rrfScore).slice(0, topK);
+  // 4. Second-Stage Candidate Re-Ranking
+  const topCandidates = fused.sort((a, b) => b.rrfScore - a.rrfScore).slice(0, Math.max(topK * 2, 10));
+  const reranked = rerankCandidates(query, topCandidates);
+  const finalResults = reranked.slice(0, topK);
+
+  logRetrievalTrace({
+    query,
+    denseCount: denseResults.length,
+    bm25Count: bm25Results.length,
+    fusedCount: fused.length,
+    chunks: finalResults,
+  });
+
+  return finalResults;
 }
+
+function rerankCandidates(query, candidates) {
+  const queryLower = query.toLowerCase();
+  const queryWords = queryLower.match(/\w+/g) || [];
+
+  return candidates
+    .map((cand) => {
+      const contentLower = (cand.content || "").toLowerCase();
+
+      // 1. Exact phrase match bonus
+      const phraseBonus = queryLower.length > 3 && contentLower.includes(queryLower) ? 0.3 : 0;
+
+      // 2. Query word coverage ratio
+      let matchedWords = 0;
+      for (const word of queryWords) {
+        if (word.length > 2 && contentLower.includes(word)) {
+          matchedWords++;
+        }
+      }
+      const coverageScore = queryWords.length > 0 ? (matchedWords / queryWords.length) * 0.2 : 0;
+
+      // 3. Normalized Dense Similarity Contribution
+      const normSimilarity = Math.max(0, cand.similarity || 0) * 0.5;
+
+      // Composite Rerank Score
+      const rerankScore = cand.rrfScore + phraseBonus + coverageScore + normSimilarity;
+
+      return {
+        ...cand,
+        rerankScore,
+      };
+    })
+    .sort((a, b) => b.rerankScore - a.rerankScore);
+}
+
 
