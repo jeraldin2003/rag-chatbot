@@ -1,6 +1,6 @@
 // one-time cleanup — recreates items collection with the configured embedding dimension
 import "dotenv/config";
-import { client } from "../config/qdrant.js";
+import { client } from "../config/Qdrant.js";
 import { EMBEDDING_DIM } from "../config/embedding.js";
 
 await client.deleteCollection("items");

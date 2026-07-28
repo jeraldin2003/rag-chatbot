@@ -1,4 +1,4 @@
-import { client } from "../config/qdrant.js";
+import { client } from "../config/Qdrant.js";
 import { hashFile } from "../utils/hashFile.js";
 
 export async function checkDuplicate(filePath) {

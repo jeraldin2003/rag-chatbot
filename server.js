@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { client } from "./src/config/qdrant.js";
+import { client } from "./src/config/Qdrant.js";
 import { EMBEDDING_DIM } from "./src/config/embedding.js";
 import { bm25 } from "./src/services/bm25Service.js";
 import uploadRouter from "./src/routes/upload.js";
@@ -46,19 +46,19 @@ async function startServer() {
     });
     console.log("✅ Qdrant payload index initialized");
   } catch (err) {
-    // console.error("❌ Failed to initialize Qdrant payload index:", err.message);
-    // process.exit(1);
-    console.log("Error in Initializing payload index.")
+    console.log("Error in Initializing payload index:", err.message);
   }
 
   await bm25.syncFromQdrant();
 
   process.on("unhandledRejection", (reason, promise) => {
     console.error("[Uncaught Rejection] at:", promise, "reason:", reason);
+    process.exit(1);
   });
 
   process.on("uncaughtException", (err) => {
     console.error("[Uncaught Exception]:", err.message, err.stack);
+    process.exit(1);
   });
 
   const PORT = process.env.PORT || 8000;

@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { client } from "./qdrant.js";
+import { client } from "./Qdrant.js";
 import { EMBEDDING_DIM } from "./embedding.js";
 
 await client.createCollection("hashes", {
