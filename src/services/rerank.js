@@ -17,8 +17,12 @@ ${candidates.map((c, i) => `[${i}] ${c.content.slice(0, 300)}`).join("\n\n")}`;
   let scores;
   try {
     const result = await model.generateContent(prompt);
-    const raw = result.response.text().replace(/```json|```/g, "").trim();
-    scores = JSON.parse(raw);
+    const responseText = result.response.text();
+    const match = responseText.match(/\[[\s\S]*\]/);
+    if (!match) {
+      throw new Error("No JSON array found in response");
+    }
+    scores = JSON.parse(match[0]);
     if (!Array.isArray(scores)) {
       throw new Error("Rerank response was not a valid array");
     }
@@ -28,7 +32,11 @@ ${candidates.map((c, i) => `[${i}] ${c.content.slice(0, 300)}`).join("\n\n")}`;
   }
 
   return candidates
-    .map((c, i) => ({ ...c, rerankScore: scores[i] ?? 0 }))
+    .map((c, i) => {
+      const rawScore = Array.isArray(scores) ? scores.at(i) : 0;
+      const score = typeof rawScore === "number" ? rawScore : (Number(rawScore) || 0);
+      return { ...c, rerankScore: score };
+    })
     .sort((a, b) => b.rerankScore - a.rerankScore)
     .slice(0, topK);
 }

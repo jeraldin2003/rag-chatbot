@@ -1,9 +1,14 @@
 import { extractText, getDocumentProxy } from "unpdf";
 import fs from "fs/promises";
+import path from "path";
 
 export default async function parsePdf(filePath) {
   try {
-    const buffer = await fs.readFile(filePath);
+    if (typeof filePath !== "string" || !filePath) {
+      throw new Error("Invalid file path provided");
+    }
+    const safePath = path.resolve(filePath);
+    const buffer = await fs.readFile(safePath);
 
     // unpdf works with a Uint8Array
     const pdf = await getDocumentProxy(new Uint8Array(buffer));

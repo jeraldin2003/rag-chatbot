@@ -20,20 +20,21 @@ async function embedOne(text) {
 }
 
 export async function embedText(text) {
-  try {
-    return await embedOne(text);
-  } catch (err) {
-    throw err;
-  }
+  return embedOne(text);
 }
 
 export async function embedTextBatch(texts) {
+  if (!Array.isArray(texts)) {
+    throw new Error("Invalid input: texts must be an array");
+  }
   try {
     const embeddings = [];
-    for (let i = 0; i < texts.length; i++) {
+    let i = 0;
+    for (const text of texts) {
       console.log(`Embedding chunk ${i + 1}/${texts.length}`);
-      const temp = await embedOne(texts[i]);
+      const temp = await embedOne(text);
       embeddings.push(temp);
+      i++;
     }
     return embeddings;
   } catch (err) {

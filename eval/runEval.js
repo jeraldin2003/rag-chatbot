@@ -1,3 +1,4 @@
+import { performance } from "node:perf_hooks";
 import { testQuestions, emptyQueryTest } from "./testQuestions.js";
 import dotenv from 'dotenv';
 dotenv.config();
@@ -6,8 +7,8 @@ const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${PORT}`;
 const PROVIDER = process.env.EVAL_PROVIDER || "gemini"; // "gemini" | "ollama"
 
 // Cost per 1k tokens: Gemini 1.5 Flash (Input: $0.000075/1k, Output: $0.0003/1k), Ollama ($0)
-const GEMINI_INPUT_COST_PER_1K = 0.000075;
-const GEMINI_OUTPUT_COST_PER_1K = 0.0003;
+const GEMINI_INPUT_COST_PER_1K = 75 / 1000000;
+const GEMINI_OUTPUT_COST_PER_1K = 3 / 10000;
 
 async function askQuestion(question) {
   const startTime = performance.now();
