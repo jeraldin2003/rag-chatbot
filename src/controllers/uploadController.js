@@ -1,7 +1,7 @@
 import fs from "fs/promises";
-import path from "path";
 import { checkDuplicate } from "../services/hashService.js";
 import { processDocument } from "../services/documentService.js";
+import { toSafeUploadPath } from "../utils/safeUploadPath.js";
 
 export async function uploadFile(req, res, next) {
   console.time("[upload] Total");
@@ -56,8 +56,8 @@ export async function uploadFile(req, res, next) {
       } finally {
         console.timeEnd(`[${file.originalname}] Total`);
         if (file?.path && typeof file.path === "string") {
-          const safePath = path.resolve(file.path);
-          await fs.unlink(safePath).catch(() => {});
+          const safePath = toSafeUploadPath(file.path);
+          await fs.unlink(safePath).catch(() => {}); // best-effort cleanup
         }
       }
     }

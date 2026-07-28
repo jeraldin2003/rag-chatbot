@@ -1,13 +1,13 @@
 import { extractText, getDocumentProxy } from "unpdf";
 import fs from "fs/promises";
-import path from "path";
+import { toSafeUploadPath } from "./safeUploadPath.js";
 
 export default async function parsePdf(filePath) {
   try {
     if (typeof filePath !== "string" || !filePath) {
       throw new Error("Invalid file path provided");
     }
-    const safePath = path.resolve(filePath);
+    const safePath = toSafeUploadPath(filePath);
     const buffer = await fs.readFile(safePath);
 
     // unpdf works with a Uint8Array
