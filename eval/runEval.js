@@ -1,5 +1,6 @@
 import { testQuestions, emptyQueryTest } from "./testQuestions.js";
-
+import dotenv from 'dotenv';
+dotenv.config();
 const PORT = process.env.PORT || 8000;
 const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${PORT}`;
 const PROVIDER = process.env.EVAL_PROVIDER || "gemini"; // "gemini" | "ollama"

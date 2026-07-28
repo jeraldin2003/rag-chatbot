@@ -1,6 +1,7 @@
 import parsePdf from "../utils/pdfParser.js";
 import { chunkText } from "../utils/chunker.js";
 import { embedTextBatch } from "../utils/ollamaEmbed.js";
+import { normalizeEmbedding } from "../config/embedding.js";
 import { client } from "../config/qdrant.js";
 import { bm25 } from "./bm25Service.js";
 import { randomUUID } from "crypto";
@@ -42,8 +43,7 @@ export async function processDocument(file, fileHash) {
 
     const now = new Date().toISOString();
     const points = chunks.map((chunk, idx) => {
-      const emb = embeddings[idx];
-      const vector = Array.isArray(emb) && Array.isArray(emb[0]) ? emb[0] : emb;
+      const vector = normalizeEmbedding(embeddings[idx]);
       return {
         id: randomUUID(),
         vector,
@@ -88,7 +88,7 @@ export async function processDocument(file, fileHash) {
       );
     } catch (error) {
       console.error(`${prefix} Qdrant storage failed:`, error.message);
-      throw new Error(`Failed to store document in vector database: ${error.message}`);
+      throw new Error(`Failed to store document in vector database: ${error}`);
     } finally {
       console.timeEnd(`${prefix} Qdrant storage`);
     }

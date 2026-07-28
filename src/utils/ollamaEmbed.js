@@ -1,6 +1,10 @@
-const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
+import ollama from "ollama";
+import dotenv from "dotenv";
+import { normalizeEmbedding } from "../config/embedding.js";
+
+dotenv.config();
+
 const OLLAMA_EMBED_MODEL = process.env.OLLAMA_EMBED_MODEL || "all-minilm";
-import ollama from 'ollama';
 
 async function embedOne(text) {
   try {
@@ -8,7 +12,7 @@ async function embedOne(text) {
       model: OLLAMA_EMBED_MODEL,
       input: text,
     });
-    return response.embeddings;
+    return normalizeEmbedding(response.embeddings);
   } catch (err) {
     console.error("[ollamaEmbed] Error generating embedding:", err.message);
     throw new Error(`Failed to generate Ollama embedding: ${err.message}`);

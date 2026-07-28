@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { client } from "./src/config/qdrant.js";
+import { EMBEDDING_DIM } from "./src/config/embedding.js";
 import { bm25 } from "./src/services/bm25Service.js";
 import uploadRouter from "./src/routes/upload.js";
 import chatRouter from "./src/routes/chat.js";
@@ -25,14 +26,29 @@ async function startServer() {
   app.use(errorHandler);
 
   try {
+    const items = await client.getCollection("items");
+    const collectionDim = items.config?.params?.vectors?.size;
+    if (collectionDim && collectionDim !== EMBEDDING_DIM) {
+      console.error(
+        `❌ Qdrant 'items' vector size is ${collectionDim}, but EMBEDDING_DIM is ${EMBEDDING_DIM}. ` +
+          `Run: node src/scripts/dbCleaner.js then re-upload documents.`
+      );
+      process.exit(1);
+    }
+  } catch (err) {
+    console.warn("⚠️ Could not verify Qdrant collection dimensions:", err.message);
+  }
+
+  try {
     await client.createPayloadIndex("hashes", {
       field_name: "file_hash",
       field_schema: "keyword",
     });
     console.log("✅ Qdrant payload index initialized");
   } catch (err) {
-    console.error("❌ Failed to initialize Qdrant payload index:", err.message);
-    process.exit(1);
+    // console.error("❌ Failed to initialize Qdrant payload index:", err.message);
+    // process.exit(1);
+    console.log("Error in Initializing payload index.")
   }
 
   await bm25.syncFromQdrant();

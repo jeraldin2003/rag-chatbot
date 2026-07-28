@@ -43,6 +43,7 @@ class BM25Index {
 
     this.totalWords += tokens.length;
     this.avgdl = this.totalWords / this.documents.size;
+    this.isInitialized = true;
   }
 
   addDocuments(docs) {

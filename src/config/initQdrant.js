@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { client } from "./qdrant.js";
+import { EMBEDDING_DIM } from "./embedding.js";
 
 await client.createCollection("hashes", {
   vectors: {
@@ -9,7 +10,7 @@ await client.createCollection("hashes", {
 });
 
 await client.createCollection("items", {
-  vectors: { size: 384, distance: "Cosine" },
+  vectors: { size: EMBEDDING_DIM, distance: "Cosine" },
 });
 await client.createPayloadIndex("items", {
   field_name: "content",
