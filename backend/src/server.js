@@ -1,12 +1,12 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { client } from "./src/config/Qdrant.js";
-import { EMBEDDING_DIM } from "./src/config/embedding.js";
-import { bm25 } from "./src/services/bm25Service.js";
-import uploadRouter from "./src/routes/upload.js";
-import chatRouter from "./src/routes/chat.js";
-import { errorHandler } from "./src/middleware/errorHandler.js";
+import { client } from "./config/Qdrant.js";
+import { EMBEDDING_DIM } from "./config/embedding.js";
+import { bm25 } from "./services/bm25Service.js";
+import uploadRouter from "./routes/upload.js";
+import chatRouter from "./routes/chat.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 async function startServer() {
   const app = express();
