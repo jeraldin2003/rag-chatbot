@@ -1,5 +1,5 @@
 export default async function askQuestion(backendUrl, question, model) {
-  const res = await fetch(`${backendUrl.replace(/\/$/, "")}/chat`, {
+  const res = await fetch(`${backendUrl.replace(/\/$/, "")}/chat/ollama`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question, model }),
